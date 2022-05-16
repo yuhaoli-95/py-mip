@@ -1,4 +1,4 @@
-PySCIPOpt
+PWPS
 =========
 
 收费求解器贵有贵的道理，免费求解器各有各的难用，同时塔们的接口还不一样。下面是个人总结的各个求解器的优缺点：
@@ -27,7 +27,7 @@ solver = Solver(solver_name = SCIP_SOLVER)
 $$\min 3a + 2\sum_{i=1}^{10}x_i + 5b$$
 $$\textrm{s.t.} \quad 3 * a + b - 10 + \sum_{i=1}^{10}x_i = 0$$
 $$x_1 = x_2$$
-$$a,b,x_i \in \left\{\begin{matrix}0，1 \end{matrix}\right\}$$
+$$a,b,x_i \in \left\{ 0, 1 \right\}$$
 
 ```python
 a = solver.new_bool_var("a")
