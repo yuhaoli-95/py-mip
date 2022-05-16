@@ -21,7 +21,7 @@ from PWPS.Solver import Solver
 ```
 2) 实例化一个```Solver```对象，在这里我们使用```LP_SOLVER```求解器：
 ```python
-solver = Solver(solver_name = SCIP_SOLVER)
+solver = Solver(solver_name = LP_SOLVER)
 ```
 3) 使用```solver```对象创建决策变量，添加模型约束及目标：
 <!-- $$
