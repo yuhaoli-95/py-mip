@@ -36,10 +36,11 @@ $$ -->
 
 <div align="center"><img style="background: white;" src="https://render.githubusercontent.com/render/math?math=%5Ctextrm%7Bs.t.%7D%20%5Cquad%203%20*%20a%20%2B%20b%20-%2010%20%2B%20%5Csum_%7Bi%3D1%7D%5E%7B10%7Dx_i%20%3D%200"></div>
 <!-- $$
-x_1 = x_2
+x_1 >= x_2
 $$ --> 
 
-<div align="center"><img style="background: white;" src="https://render.githubusercontent.com/render/math?math=x_1%20%3D%20x_2"></div>
+<div align="center"><img style="background: white;" src="https://render.githubusercontent.com/render/math?math=x_1%20%3E%3D%20x_2"></div>
+
 <!-- $$
 a,b,x_i \in \left\{ 0, 1 \right\}
 $$ --> 
