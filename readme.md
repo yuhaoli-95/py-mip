@@ -23,11 +23,24 @@ from PWPS.Solver import Solver
 ```python
 solver = Solver(solver_name = SCIP_SOLVER)
 ```
-1) 使用```solver```对象创建决策变量，添加模型约束及目标：
-$$\min 3a + 2\sum_{i=1}^{10}x_i + 5b$$
+3) 使用```solver```对象创建决策变量，添加模型约束及目标：
+<!-- $$\min 3a + 2\sum_{i=1}^{10}x_i + 5b$$
 $$\textrm{s.t.} \quad 3 * a + b - 10 + \sum_{i=1}^{10}x_i = 0$$
 $$x_1 = x_2$$
-$$a,b,x_i \in \left\{ 0, 1 \right\}$$
+$$a,b,x_i \in \left\{ 0, 1 \right\}$$ -->
+
+<!-- $$\min 3a + 2\sum_{i=1}^{10}x_i + 5b$$ --> 
+
+<div align="center"><img style="background: white;" src="svg/tC3brNRojW.svg"></div>
+<!-- $$\textrm{s.t.} \quad 3 * a + b - 10 + \sum_{i=1}^{10}x_i = 0$$ --> 
+
+<div align="center"><img style="background: white;" src="svg/oCsSxYx53e.svg"></div>
+<!-- $$x_1 = x_2$$ --> 
+
+<div align="center"><img style="background: white;" src="svg/o2nzSEptGG.svg"></div>
+<!-- $$a,b,x_i \in \left\{ 0, 1 \right\}$$ --> 
+
+<div align="center"><img style="background: white;" src="svg/TJVBMI5SZm.svg"></div>
 
 ```python
 a = solver.new_bool_var("a")
