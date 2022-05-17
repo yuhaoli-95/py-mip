@@ -7,9 +7,16 @@ PWPS
 |----|----|----|
 |ortools.linear_solver|塔可以输出人类可读的数学模型文件;<br>ortools安装方便，不需要其他依赖包支持; |不支持二次目标和二次约束; <br>没有求解冲突约束的接口函数; |
 |ortools.sat(cp_model)|塔支持计算IIS;<br>ortools安装方便，不需要其他依赖包支持;|塔输出的数学模型文件很难读，人类基本可以放弃；<br>不支持二次项; |
-|PySCIPOpt|由于塔是直接调用编译好的scip，所以是支持二次项计算; |接口只是简单包装了下，对象的属性点不出来；<br>输出数学模型文件函数有问题，会直接报错；<br>不知道是否支持计算IIS，因为根本不知道model对象有哪些参数、函数😅；<br>需要先安装scip，对系统c库有要求; |
+|PySCIPOpt|由于塔是直接调用编译好的scip，所以是支持二次项计算; |接口只是简单包装了下，对象的属性点不出来；<br>输出数学模型文件函数有问题，会直接报错；<br>不知道是否支持计算IIS，因为根本不知道model对象有哪些参数、函数😅；<br>需要先安装scip，对系统c库有要求;<br>虽然PySCIPOpt可以通过pip直接安装，但是scip的版本必须和PySCIPOpt版本匹配。如果因为不匹配报错，给出的错误提示完全想不到是版本不匹配造成的; <br>要先使用scip，必须得获取一个许可，可能商用会有风险; |
 
-本项目旨在像焊工一样，对各个免费求解器进行封装焊接在一起，构建一个高层api，以便尽量可能多的利用免费求解器的各个功能。
+还有难用的一点是，即使是ortools这个求解器，linear_solver和cp_model的返回结果也完全不一样，至于PySCIPOpt实例化的model完全不知道有什么属性（可能是因为我用的版本=7.x太低了？）。
+|求解器名称| 最优解 | 可行解 | 不可行解 | 其他返回标志 |
+|----|----|----|----|----|
+|ortools.linear_solver| linear_solver.Solver.OPTIMAL = 0 | linear_solver.Solver.FEASIBLE = 1 | linear_solver.Solver.INFEASIBLE = 2 | Solver.NOT_SOLVED = 6|
+|ortools.sat(cp_model)| cp_model.OPTIMAL = 4 | cp_model.FEASIBLE = 2 | cp_model.INFEASIBLE = 3 | cp_model.MODEL_INVALID = 1 |
+|PySCIPOpt| - | - | - | - |
+
+基于以上，本项目旨在像焊工一样，对各个免费求解器进行封装焊接在一起，构建一个高层api，以便尽量可能多的利用免费求解器的各个功能。
 
 建模求解示例
 ----------------------------
@@ -47,6 +54,14 @@ $$ -->
 
 <div align="center"><img style="background: white;" src="https://render.githubusercontent.com/render/math?math=a%2Cb%2Cx_i%20%5Cin%20%5Cleft%5C%7B%200%2C%201%20%5Cright%5C%7D"></div>
 
+
+<!-- $$
+x_1 \ge x_2
+$$ --> 
+
+<div align="center"><img style="background: white;" src="https://render.githubusercontent.com/render/math?math=x_1%20%5Cge%20x_2"></div>
+
+
 ```python
 a = solver.new_bool_var("a")
 b = solver.new_bool_var("b")
@@ -79,17 +94,17 @@ print("objective value: ", solver.objective_value)
 ```
 status: optimal
 solution: 
-a = 1.0
-b = 0.0
-x0 = 0.0
-x1 = 0.0
-x2 = 0.0
-x3 = 1.0
-x4 = 1.0
-x5 = 1.0
-x6 = 1.0
-x7 = 1.0
-x8 = 1.0
-x9 = 1.0
+a = 1
+b = 0
+x0 = 0
+x1 = 0
+x2 = 0
+x3 = 1
+x4 = 1
+x5 = 1
+x6 = 1
+x7 = 1
+x8 = 1
+x9 = 1
 objective value:  16.999999999999996
 ```
