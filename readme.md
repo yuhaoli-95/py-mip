@@ -20,7 +20,7 @@ PWPS
 
 建模求解示例
 ----------------------------
-在[example](examples/)文件夹中会提供一些使用示例。总的来说依据下面流程构建模型：
+在[example](example/)文件夹中会提供一些使用示例。总的来说依据下面流程构建模型：
 1) 从项目中导入```Solver```类及求解器名称：
 ```python
 from PWPS.Config import CP_SAT_SOLVER, LP_SOLVER, SCIP_SOLVER
