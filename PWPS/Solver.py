@@ -3,10 +3,10 @@
 '''
 Author: Li Yuhao
 Date: 2021-07-06 11:22:51
-LastEditTime : 2022-05-16 21:19:00
-LastEditors  : your name
+LastEditTime: 2022-05-17 10:38:28
+LastEditors: your name
 Description: 
-FilePath     : \\PWPS\\PWPS\\Solver.py
+FilePath: \\PWPS\\PWPS\\Solver.py
 '''
 
 import numbers
@@ -31,6 +31,7 @@ __all__ = ["Solver"]
 
 _is_real_number = lambda x: isinstance(x, numbers.Real)
 _is_var = lambda x: isinstance(x, IntVar) or isinstance(x, BoolVar) or isinstance(x, Variable) or isinstance(x, Constant)
+_is_integer_var = lambda x: isinstance(x, IntVar) or isinstance(x, BoolVar)
 _is_expression = lambda x: isinstance(x, _Expression)
 _create_if_not_exists = lambda path_str: os.makedirs(path_str) if not os.path.exists(path_str) else None
 
@@ -341,7 +342,7 @@ class Solver:
 
         # 全部的cp_sat变量
         self._cp_sat_all_vars: Dict[str, cp_model.IntVar] = {}
-        self._cp_sat_assumptions = [] # 约束列表
+        self._cp_sat_assumptions: List[BoolVar] = [] # 约束列表
 
 
         """     SCIP 相关属性    """
@@ -387,8 +388,8 @@ class Solver:
         return self._compute_IIS
 
     @compute_IIS.setter
-    def solver_name(self, compute_IIS: bool):
-        self._compute_IIS = compute_IIS
+    def compute_IIS(self, _compute_IIS: bool):
+        self._compute_IIS = _compute_IIS
         return
 
     @property
@@ -502,6 +503,7 @@ class Solver:
             value = self._cp_sat_solver.Value(var._var)
         elif self._solver_name == SCIP_SOLVER:
             value = self._scip_sol[0][var._var]
+        value = round(value) if _is_integer_var(var) else value
         return value
     
     # export model detail into file
@@ -559,7 +561,8 @@ class Solver:
         # cp sat model
         elif self._solver_name == CP_SAT_SOLVER:
             # set time limit
-            self._MIP_solver.parameters.max_time_in_seconds = int(self._time_limit.total_seconds() * 1000)
+            if self._time_limit:
+                self._cp_sat_solver.parameters.max_time_in_seconds = int(self._time_limit.total_seconds() * 1000)
             # solve problem
             _status = self._cp_sat_solver.Solve(self._cp_sat_model)
             # modify solver status
@@ -570,7 +573,8 @@ class Solver:
         # scip model
         elif self._solver_name == SCIP_SOLVER:
             # set time limit
-            self._scip_model.setRealParam('limits/time', self._time_limit.total_seconds())
+            if self._time_limit:
+                self._scip_model.setRealParam('limits/time', self._time_limit.total_seconds())
             # solve problem
             self._scip_obj.optimize()
             # get scip result solutions
@@ -591,14 +595,13 @@ class Solver:
         return _status
 
     # 计算冲突约束
-    def check_balance_rule(self):
+    def find_conflict_constraints(self):
         '''
         description: 计算冲突约束
         return [*]
         '''
         # Creates a solver and solves the model.
-        self._cp_sat_model.AddAssumptions(self._cp_sat_assumptions)
-        self._MIP_solver = cp_model.CpSolver()
+        self._cp_sat_model.AddAssumptions([item._var for item in self._cp_sat_assumptions])
         # # 设置最大运行时间
         a = self._cp_sat_model.Validate()
         # 求解
@@ -607,7 +610,7 @@ class Solver:
             return []
         elif _status == INFEASIBLE:
             # 如果还是不能给出可行解，则输出冲突的约束
-            bad_constraints = [ass.Name() for ass in self._cp_sat_assumptions if ass.Index() in self._MIP_solver.SufficientAssumptionsForInfeasibility()]
-            return bad_constraints
+            conflict_constraints = [ass._var.Name() for ass in self._cp_sat_assumptions if ass._var.Index() in self._cp_sat_solver.SufficientAssumptionsForInfeasibility()]
+            return conflict_constraints
         else:
             raise ValueError(f"{self._solver_name} solver return UNDEFINED STATUS = {_status}!")
