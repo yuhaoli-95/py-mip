@@ -18,6 +18,25 @@ PWPS
 
 基于以上，本项目旨在像焊工一样，对各个免费求解器进行封装焊接在一起，构建一个高层api，以便尽量可能多的利用免费求解器的各个功能。
 
+依赖
+----------------------------
+```
+ortools
+pyscipopt(需要额外安装scip，需要注意pyscipopt版本和scip版本匹配，如果未安装pyscipopt，则不能调用SCIP_SOLVER)
+```
+可直接通过```pip```进行安装:
+```
+pip install ortools pyscipopt==3.5
+```
+
+本项目提供3种求解器调用
+|求解器名称|调用求解器内核|使用场景|安装说明|
+|----|----|----|----|
+|```LP_SOLVER```|```ortools.linear_solver```，通过```SCIP_MIXED_INTEGER_PROGRAMMING```调用SCIP求解器|正常建模求解;<br> 输出格式化的模型文件;|```ortools```|
+|```CP_SAT_SOLVER```|```ortools.sat.cp_model```|针对不可行问题找出其中冲突约束(```IIS```);|```ortools```|
+|```SCIP_SOLVER```|```pyscipopt.Model```|求解二次规划问题（```ortools.linear_solver```中不能建立二次模型）;|```pyscipopt, scip```|
+
+
 建模求解示例
 ----------------------------
 在[example](example/)文件夹中会提供一些使用示例。总的来说依据下面流程构建模型：
@@ -43,10 +62,10 @@ $$ -->
 
 <div align="center"><img style="background: white;" src="https://render.githubusercontent.com/render/math?math=%5Ctextrm%7Bs.t.%7D%20%5Cquad%203%20*%20a%20%2B%20b%20-%2010%20%2B%20%5Csum_%7Bi%3D1%7D%5E%7B10%7Dx_i%20%3D%200"></div>
 <!-- $$
-x_1 >= x_2
+x_1 \ge x_2
 $$ --> 
 
-<div align="center"><img style="background: white;" src="https://render.githubusercontent.com/render/math?math=x_1%20%3E%3D%20x_2"></div>
+<div align="center"><img style="background: white;" src="https://render.githubusercontent.com/render/math?math=x_1%20%5Cge%20x_2"></div>
 
 <!-- $$
 a,b,x_i \in \left\{ 0, 1 \right\}
@@ -54,12 +73,6 @@ $$ -->
 
 <div align="center"><img style="background: white;" src="https://render.githubusercontent.com/render/math?math=a%2Cb%2Cx_i%20%5Cin%20%5Cleft%5C%7B%200%2C%201%20%5Cright%5C%7D"></div>
 
-
-<!-- $$
-x_1 \ge x_2
-$$ --> 
-
-<div align="center"><img style="background: white;" src="https://render.githubusercontent.com/render/math?math=x_1%20%5Cge%20x_2"></div>
 
 
 ```python
