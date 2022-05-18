@@ -3,7 +3,7 @@
 '''
 Author: Li Yuhao
 Date: 2021-07-06 11:22:51
-LastEditTime: 2022-05-17 10:38:28
+LastEditTime: 2022-05-18 10:23:22
 LastEditors: your name
 Description: 
 FilePath: \\PWPS\\PWPS\\Solver.py
@@ -19,8 +19,11 @@ from typing import Dict, List, Union
 
 from ortools.linear_solver import pywraplp as lp
 from ortools.sat.python import cp_model
-from pyscipopt import Model as ScipModel
-
+try:
+    from pyscipopt import Model as ScipModel
+    pyscipopt_FLAG = True
+except:
+    pyscipopt_FLAG = False
 
 from .Config import CP_SAT_SOLVER, LP_SOLVER, SCIP_SOLVER
 from .Config import FEASIBLE, IDLE, INFEASIBLE, NOT_SOLVED, OPTIMAL
@@ -323,6 +326,10 @@ class Solver:
         """     功能参数    """
         self.problem_name = problem_name # 问题名称
         self._solver_name = solver_name # 求解器名称
+        if solver_name == SCIP_SOLVER and pyscipopt_FLAG == False:
+            raise NotImplementedError(
+                '未能成功导入"pyscipopt",请检查环境中是否安装成功.' + 
+                '如果模型中不涉及二次表达式,可以使用"LP_SOLVER"求解器(通过ortools直接调用scip求解器)进行建模.')
         self._compute_IIS = compute_IIS # 是否求解冲突约束
         # self.time_limit: int = int(time_limit.total_seconds() * 1000)
         self._time_limit = time_limit # 计算时间限制
