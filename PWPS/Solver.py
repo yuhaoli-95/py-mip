@@ -3,10 +3,10 @@
 '''
 Author: Li Yuhao
 Date: 2021-07-06 11:22:51
-LastEditTime: 2022-05-18 10:23:22
-LastEditors: your name
+LastEditTime : 2022-05-22 21:58:02
+LastEditors  : your name
 Description: 
-FilePath: \\PWPS\\PWPS\\Solver.py
+FilePath     : \\PWPS\\PWPS\\Solver.py
 '''
 
 import numbers
@@ -30,10 +30,11 @@ from .Config import FEASIBLE, IDLE, INFEASIBLE, NOT_SOLVED, OPTIMAL
 
 
 
-__all__ = ["Solver"]
+__all__ = ["Solver", "IntVar", "BoolVar", "Variable", "_Expression"]
 
 _is_real_number = lambda x: isinstance(x, numbers.Real)
 _is_var = lambda x: isinstance(x, IntVar) or isinstance(x, BoolVar) or isinstance(x, Variable) or isinstance(x, Constant)
+# _is_constant = lambda x: isinstance(x, Constant) or isinstance(x, numbers.Real)
 _is_integer_var = lambda x: isinstance(x, IntVar) or isinstance(x, BoolVar)
 _is_expression = lambda x: isinstance(x, _Expression)
 _create_if_not_exists = lambda path_str: os.makedirs(path_str) if not os.path.exists(path_str) else None
@@ -267,7 +268,12 @@ class _Expression(AbstractVariavle):
         return self.__info
 
     def __get_var(self, item) -> list:
-        self._name = f"{item._name}" if self._name == "" else f"{self._name} {self._operation} {item._name}"
+        _left = f"{self._name}"
+        _right = f"{item._name}"
+        if self._operation == "*":
+            _left = _left if not _is_var(self._left) else f"({_left})"
+            _right = _right if not _is_var(self._left) else f"({_right})"
+        self._name = f"{item._name}" if self._name == "" else f"{_left} {self._operation} {_right}"
         return item._var
         
     def __init__(self, left, right, solver_name: str, name: str = "", operation: str = "+") -> None:
@@ -353,7 +359,7 @@ class Solver:
 
 
         """     SCIP 相关属性    """
-        self._scip_model = ScipModel() # linear solver 模型
+        self._scip_model = ScipModel() if solver_name == SCIP_SOLVER else None # linear solver 模型
         self._scip_obj = self._scip_model # linear solver obj
         self._scip_sol = [] # scip最终结果 
 
@@ -528,7 +534,7 @@ class Solver:
         folder_path = file_path.parent
         if self._export_model_path and self._solver_name == LP_SOLVER:
             _create_if_not_exists(folder_path)
-            with open(file_path, 'w') as f:
+            with open(file_path, 'w', encoding="utf-8") as f:
                 f.write(self._lp_model.ExportModelAsLpFormat(False))
         else:
             warnings.warn(f'Current solver is "{self._solver_name}". Only "LP_SOLVER" can export mathmatical formula into file!')
