@@ -3,7 +3,7 @@
 '''
 Author: Li Yuhao
 Date: 2021-07-06 11:22:51
-LastEditTime : 2022-05-22 22:12:52
+LastEditTime : 2022-05-23 21:20:16
 LastEditors  : your name
 Description: 
 FilePath     : \\PWPS\\PWPS\\Solver.py
@@ -32,12 +32,12 @@ from .Config import FEASIBLE, IDLE, INFEASIBLE, NOT_SOLVED, OPTIMAL
 
 __all__ = ["Solver", "IntVar", "BoolVar", "Variable", "Expression"]
 
-__is_real_number = lambda x: isinstance(x, numbers.Real)
-__is_var = lambda x: isinstance(x, IntVar) or isinstance(x, BoolVar) or isinstance(x, Variable) or isinstance(x, Constant)
+_is_real_number = lambda x: isinstance(x, numbers.Real)
+_is_var = lambda x: isinstance(x, IntVar) or isinstance(x, BoolVar) or isinstance(x, Variable) or isinstance(x, Constant)
 # _is_constant = lambda x: isinstance(x, Constant) or isinstance(x, numbers.Real)
-__is_integer_var = lambda x: isinstance(x, IntVar) or isinstance(x, BoolVar)
-__is_expression = lambda x: isinstance(x, Expression)
-__create_if_not_exists = lambda path_str: os.makedirs(path_str) if not os.path.exists(path_str) else None
+_is_integer_var = lambda x: isinstance(x, IntVar) or isinstance(x, BoolVar)
+_is_expression = lambda x: isinstance(x, Expression)
+_create_if_not_exists = lambda path_str: os.makedirs(path_str) if not os.path.exists(path_str) else None
 
 
 
@@ -84,58 +84,71 @@ class AbstractVariavle(ABC):
     
     # self + expr
     def __add__(self, expr):
-        if __is_real_number(expr):
+        if _is_real_number(expr):
             expr = Constant(expr)
         return Expression(left = self, right = expr, solver_name=self._solver_name)
 
     # expr + self
     def __radd__(self, expr):
-        if __is_real_number(expr):
+        if _is_real_number(expr):
             expr = Constant(expr)
-        if __is_real_number(expr) or __is_var(expr) or __is_expression(expr):
+        if _is_real_number(expr) or _is_var(expr) or _is_expression(expr):
             return Expression(left = expr, right = self, solver_name=self._solver_name)
         else:
             raise TypeError('')
 
     # self - expr
     def __sub__(self, expr):
-        if __is_real_number(expr):
+        if _is_real_number(expr):
             expr = Constant(expr)
         return Expression(left = self, right = expr, solver_name=self._solver_name, operation= "-")
 
     # expr - self
     def __rsub__(self, expr):
-        if __is_real_number(expr):
+        if _is_real_number(expr):
             expr = Constant(expr)
         return Expression(left = expr, right = self, solver_name=self._solver_name, operation= "-")
 
     # self * expr
     def __mul__(self, expr):
-        if __is_real_number(expr):
+        if _is_real_number(expr):
             expr = Constant(expr)
         return Expression(left = self, right = expr, solver_name=self._solver_name, operation="*")
 
     # expr * self
     def __rmul__(self, expr):
-        if __is_real_number(expr):
+        if _is_real_number(expr):
             expr = Constant(expr)
         return Expression(left = expr, right = self, solver_name=self._solver_name, operation="*")
 
+    # self / expr
+    def __truediv__(self, expr):
+        if _is_real_number(expr):
+            expr = Constant(expr)
+        return Expression(left = self, right = expr, solver_name=self._solver_name, operation="/")
+
+    # expr / self
+    def __rtruediv__(self, expr):
+        if _is_real_number(expr):
+            expr = Constant(expr)
+        return Expression(left = expr, right = self, solver_name=self._solver_name, operation="/")
+
+
     # self == expr
     def __eq__(self, expr):
-        if __is_real_number(expr):
+        if _is_real_number(expr):
             expr = Constant(expr)
         return Expression(left = self, right = expr, solver_name=self._solver_name, operation="==")
     
     # self >= expr
     def __ge__(self, expr):
-        if __is_real_number(expr):
+        if _is_real_number(expr):
             expr = Constant(expr)
         return Expression(left = self, right = expr, solver_name=self._solver_name, operation=">=")
     
     # self <= expr
     def __le__(self, expr):
-        if __is_real_number(expr):
+        if _is_real_number(expr):
             expr = Constant(expr)
         return Expression(left = self, right = expr, solver_name=self._solver_name, operation="<=")
 
@@ -271,8 +284,8 @@ class Expression(AbstractVariavle):
         _left = f"{self._name}"
         _right = f"{item._name}"
         if self._operation == "*":
-            _left = _left if not __is_var(self._left) else f"({_left})"
-            _right = _right if not __is_var(self._left) else f"({_right})"
+            _left = _left if _is_var(self._left) else f"({_left})"
+            _right = _right if _is_var(self._left) else f"({_right})"
         self._name = f"{item._name}" if self._name == "" else f"{_left} {self._operation} {_right}"
         return item._var
         
@@ -481,7 +494,7 @@ class Solver:
 
     # 设置目标函数
     def set_obj(self, coeff: int, var: Union[IntVar, BoolVar, Variable]):
-        if __is_real_number(coeff):
+        if _is_real_number(coeff):
             coeff = Constant(coeff)
         tmp_obj_formula = coeff * var
         self.__obj_formula.append(tmp_obj_formula)
@@ -493,7 +506,7 @@ class Solver:
         
         # record objective variable
         self.__all_obj_vars[self._solver_name][var._name] = var
-        if __is_var(coeff): self.__all_obj_vars[self._solver_name][coeff._name] = coeff
+        if _is_var(coeff): self.__all_obj_vars[self._solver_name][coeff._name] = coeff
         return
 
     # model tools
@@ -516,7 +529,7 @@ class Solver:
             value = self._cp_sat_solver.Value(var._var)
         elif self._solver_name == SCIP_SOLVER:
             value = self._scip_sol[0][var._var]
-        value = round(value) if __is_integer_var(var) else value
+        value = round(value) if _is_integer_var(var) else value
         return value
     
     # export model detail into file
@@ -533,7 +546,7 @@ class Solver:
         file_path = pathlib.Path(file_path)
         folder_path = file_path.parent
         if self._export_model_path and self._solver_name == LP_SOLVER:
-            __create_if_not_exists(folder_path)
+            _create_if_not_exists(folder_path)
             with open(file_path, 'w', encoding="utf-8") as f:
                 f.write(self._lp_model.ExportModelAsLpFormat(False))
         else:
