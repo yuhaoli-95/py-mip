@@ -3,10 +3,10 @@
 '''
 Author: Li Yuhao
 Date: 2021-07-06 11:22:51
-LastEditTime : 2022-05-23 21:20:16
-LastEditors  : your name
+LastEditTime: 2022-05-26 10:58:22
+LastEditors: your name
 Description: 
-FilePath     : \\PWPS\\PWPS\\Solver.py
+FilePath: \\PWPS\\PWPS\\Solver.py
 '''
 
 import numbers
@@ -475,21 +475,28 @@ class Solver:
         return var
 
     def add_constraint(self, constraint: Expression, name: str) -> None:
+        if isinstance(constraint, bool):
+            tmp_constraint = constraint
+            if self.solver_name == SCIP_SOLVER:
+                warnings.warn(f"'{name}'约束 = {constraint},该约束没有相关变量为'bool'类型, 由于'SCIP_SOLVER'框架限制忽略该约束;")
+                return
+        elif isinstance(constraint, Expression):
+            tmp_constraint = constraint._var
         self.__constraint_formula.append(constraint)
         
         # add constraint
         if self._solver_name == LP_SOLVER:
-            self._lp_model.Add(constraint=constraint._var, name=name)
+            self._lp_model.Add(constraint=tmp_constraint, name=name)
         elif self._solver_name == CP_SAT_SOLVER:
             # 如果想要计算冲突约束, 则需要额外定义 assumption 变量
             if self._compute_IIS:
                 assumption = self.new_bool_var(name=f"_ASSUMPTION_{name}")
-                self._cp_sat_model.Add(constraint._var).OnlyEnforceIf(assumption._var)
+                self._cp_sat_model.Add(tmp_constraint).OnlyEnforceIf(assumption._var)
                 self._cp_sat_assumptions.append(assumption)
             else:
-                self._cp_sat_model.Add(constraint._var)
+                self._cp_sat_model.Add(tmp_constraint)
         elif self._solver_name == SCIP_SOLVER:
-            self._scip_model.addCons(constraint._var, name)
+            self._scip_model.addCons(tmp_constraint, name)
         return
 
     # 设置目标函数
