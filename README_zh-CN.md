@@ -1,7 +1,13 @@
-PWPS
-=========
+## **PY-MIP**
+----------------------------
+**PY-MIP**是一个基于python的MIP（Mixed-Integer Linear programs）“套娃”求解器，通过提供一个统一的API接口来充分利用各个开源免费求解器的各项功能。许多著名的免费求解器都有一些问题，而且由于塔们的接口不统一，由一个求解器定义的模型很难用另一个模型重新定义。因此**PY-MIP**提供一套高层API来调用不同求解器建模和求解，包括：
+ -  OR-Tools
+ -  PySCIPOpt
+ -  …
 
-收费求解器贵有贵的道理，免费求解器各有各的难用，同时塔们的接口还不一样。下面是个人总结的各个求解器的优缺点：
+模型只需要定义一次即可。
+
+下面是个人总结的各个求解器的优缺点：
 
 |求解器名称|优点 |缺点 |
 |----|----|----|
@@ -9,24 +15,21 @@ PWPS
 |ortools.sat(cp_model)|塔支持计算IIS;<br>ortools安装方便，不需要其他依赖包支持;|塔输出的数学模型文件很难读，人类基本可以放弃；<br>不支持二次项; |
 |PySCIPOpt|由于塔是直接调用编译好的scip，所以是支持二次项计算; |接口只是简单包装了下，对象的属性点不出来；<br>输出数学模型文件函数有问题，会直接报错；<br>不知道是否支持计算IIS，因为根本不知道model对象有哪些参数、函数😅；<br>需要先安装scip，对系统c库有要求;<br>虽然PySCIPOpt可以通过pip直接安装，但是scip的版本必须和PySCIPOpt版本匹配。如果因为不匹配报错，给出的错误提示完全想不到是版本不匹配造成的; <br>要先使用scip，必须得获取一个许可，可能商用会有风险; |
 
-还有难用的一点是，即使是ortools这个求解器，linear_solver和cp_model的返回结果也完全不一样，至于PySCIPOpt实例化的model完全不知道有什么属性（可能是因为我用的版本=7.x太低了？）。
-|求解器名称| 最优解 | 可行解 | 不可行解 | 其他返回标志 |
+还有难用的一点是，即使是ortools这个求解器，linear_solver和cp_model的返回结果也完全不一样。
+|求解器名称| 最优解 | 可行解 | 不可行解 | 其他标志 |
 |----|----|----|----|----|
 |ortools.linear_solver| linear_solver.Solver.OPTIMAL = 0 | linear_solver.Solver.FEASIBLE = 1 | linear_solver.Solver.INFEASIBLE = 2 | Solver.NOT_SOLVED = 6|
-|ortools.sat(cp_model)| cp_model.OPTIMAL = 4 | cp_model.FEASIBLE = 2 | cp_model.INFEASIBLE = 3 | cp_model.MODEL_INVALID = 1 |
-|PySCIPOpt| - | - | - | - |
+|ortools.sat.python.cp_model(cp_model)| cp_model.OPTIMAL = 4 | cp_model.FEASIBLE = 2 | cp_model.INFEASIBLE = 3 | cp_model.MODEL_INVALID = 1 |
 
-基于以上，本项目旨在像焊工一样，对各个免费求解器进行封装焊接在一起，构建一个高层api，以便尽量可能多的利用免费求解器的各个功能。
 
-依赖
+商用求解器（比如Gurobi或者CPLEX）的话开源提供丰富的功能，但是由于需要购买（白嫖最快乐），所以可能不适合中小公司或者个人开发者。
+
+
+## 依赖
 ----------------------------
 ```
 ortools
-pyscipopt(需要额外安装scip，需要注意pyscipopt版本和scip版本匹配，如果未安装pyscipopt，则不能调用SCIP_SOLVER)
-```
-可直接通过```pip```进行安装:
-```
-pip install ortools pyscipopt==3.5
+pyscipopt(可选，需要额外安装scip)
 ```
 
 本项目提供3种求解器调用
@@ -37,7 +40,7 @@ pip install ortools pyscipopt==3.5
 |```SCIP_SOLVER```|```pyscipopt.Model```|求解二次规划问题（```ortools.linear_solver```中不能建立二次模型）;|```pyscipopt, scip```|
 
 
-建模求解示例
+## 建模求解示例
 ----------------------------
 在[example](example/)文件夹中会提供一些使用示例。总的来说依据下面流程构建模型：
 1) 从项目中导入```Solver```类及求解器名称：
@@ -121,3 +124,7 @@ x8 = 1
 x9 = 1
 objective value:  16.999999999999996
 ```
+
+## 其他示例
+----------------------------
+在[example](example/)可以找到其他示例。
