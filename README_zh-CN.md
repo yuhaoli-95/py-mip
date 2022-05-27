@@ -1,5 +1,5 @@
 ## **PY-MIP**
-----------------------------
+
 **PY-MIP**是一个基于python的MIP（Mixed-Integer Linear programs）“套娃”求解器，通过提供一个统一的API接口来充分利用各个开源免费求解器的各项功能。许多著名的免费求解器都有一些问题，而且由于塔们的接口不统一，由一个求解器定义的模型很难用另一个模型重新定义。因此**PY-MIP**提供一套高层API来调用不同求解器建模和求解，包括：
  -  OR-Tools
  -  PySCIPOpt
@@ -26,7 +26,7 @@
 
 
 ## 依赖
-----------------------------
+
 ```
 ortools
 pyscipopt(可选，需要额外安装scip)
@@ -41,12 +41,12 @@ pyscipopt(可选，需要额外安装scip)
 
 
 ## 建模求解示例
-----------------------------
+
 在[example](example/)文件夹中会提供一些使用示例。总的来说依据下面流程构建模型：
 1) 从项目中导入```Solver```类及求解器名称：
 ```python
-from PWPS.Config import CP_SAT_SOLVER, LP_SOLVER, SCIP_SOLVER
-from PWPS.Solver import Solver
+from pymip.Config import CP_SAT_SOLVER, LP_SOLVER, SCIP_SOLVER
+from pymip.Solver import Solver
 ```
 2) 实例化一个```Solver```对象，在这里我们使用```LP_SOLVER```求解器：
 ```python
@@ -126,5 +126,5 @@ objective value:  16.999999999999996
 ```
 
 ## 其他示例
-----------------------------
+
 在[example](example/)可以找到其他示例。

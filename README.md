@@ -1,6 +1,8 @@
 ## **PY-MIP**
-----------------------------
+
 English | [简体中文](README_zh-CN.md)
+
+
 **PY-MIP** is a python-based collection of different MIP (Mixed-Integer Linear programs) FREE solvers for making full use of their own advantages by providing a uniform API.  Many famous FREE solvers (such as OR-Tools) have had problems and a model defined by a FREE solver can be hard to be redefined by another solver because of their different API. So **PY-MIP** provides high-level API to model and solve MIP by invoking different FREE solvers including:
  -  OR-Tools
  -  PySCIPOpt
@@ -23,7 +25,7 @@ Commercial solvers (such as Gurobi or CPLEX) provide rich features including all
 
 
 ## Requirements
-----------------------------
+
 ```
 ortools
 pyscipopt(optional, a SCIP Optimization Suite needs to be installed)
@@ -38,13 +40,13 @@ pyscipopt(optional, a SCIP Optimization Suite needs to be installed)
 
 
 ## Model and solve a linear program
-----------------------------
+
 For solving a MIP problem, you can use **PY-MIP** mainly in three steps:
 
 1) import ```Solver``` class and solver names
     ```python
-    from PWPS.Config import CP_SAT_SOLVER, LP_SOLVER, SCIP_SOLVER
-    from PWPS.Solver import Solver
+    from pymip.Config import CP_SAT_SOLVER, LP_SOLVER, SCIP_SOLVER
+    from pymip.Solver import Solver
     ```
 2) Instantiate ```Solver``` class with a solver name, for example ```LP_SOLVER```.
     ```python
@@ -124,6 +126,6 @@ objective value:  16.999999999999996
 ```
 
 ## Additional examples
-----------------------------
+
 
 Additional example scripts are available in the [example](example/) of this GitHub.
