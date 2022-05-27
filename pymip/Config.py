@@ -3,10 +3,10 @@
 '''
 Author: Li Yuhao
 Date: 2022-05-13 14:42:55
-LastEditTime: 2022-05-16 18:01:42
+LastEditTime: 2022-05-27 16:55:01
 LastEditors: your name
 Description: 
-FilePath: \\PWPS\\PWPS\\Config.py
+FilePath: \\pymip\\pymip\\Config.py
 '''
 
 CP_SAT_SOLVER = "CP_SAT_SOLVER" # ortools中的 cp sat model

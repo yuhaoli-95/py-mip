@@ -3,10 +3,10 @@
 '''
 Author: Li Yuhao
 Date: 2021-07-06 11:22:51
-LastEditTime: 2022-05-26 10:58:22
+LastEditTime: 2022-05-27 16:55:05
 LastEditors: your name
 Description: 
-FilePath: \\PWPS\\PWPS\\Solver.py
+FilePath: \\pymip\\pymip\\Solver.py
 '''
 
 import numbers
