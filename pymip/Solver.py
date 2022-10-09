@@ -199,11 +199,27 @@ class Variable(AbstractVariavle):
         return self.__str__()
 
     def __init__(self, model, solver_name: str, lb: int, ub: int, integer: bool, name: str = "") -> None:
+        '''
+        description: 
+        param [*] model: model
+        param [str] solver_name: solver type name
+        param [int] lb: lower boundary of variable
+        param [int] ub: upper boundary of varibale
+        param [bool] integer: whether variable is an integer
+        param [str] name: the name of variable
+        return [*]
+        '''
         super().__init__(solver_name, lb, ub, integer, name)
         if solver_name == LP_SOLVER:
             var = model.Var(lb=lb, ub=ub, integer=integer, name=name)
         elif solver_name == CP_SAT_SOLVER:
-            raise TypeError(detail=f"CP SAT 模型不允许创建小数变量,请检查'{name}'变量类型！")
+            if integer:
+                if lb == 0 and ub == 1:
+                    var = model.NewBoolVar(name=name)
+                else:
+                    var = model.NewIntVar(lb=lb, ub=ub, name=name)
+            else:
+                raise TypeError(detail=f"CP SAT 模型不允许创建小数变量,请检查'{name}'变量类型！")
         elif solver_name == SCIP_SOLVER:
             vtype = "I" if integer else "C"
             var = model.addVar(name = name, vtype = vtype, lb = lb, ub = ub)
