@@ -647,3 +647,104 @@ class Solver:
             return conflict_constraints
         else:
             raise ValueError(f"{self._solver_name} solver return UNDEFINED STATUS = {_status}!")
+
+class DictBoolVar:
+    def __repr__(self) -> str:
+        return f"{self.__name} var collection: {self.__var_cnt}"
+
+
+    def __dfs_create_dict_bool_var(self, org_dict: Dict, tar_dict: Dict, tmp_var_name: str, deepth: int, model: Solver):
+        # 找到原始字典结构中的叶子节点
+        if not isinstance(org_dict, dict):
+            if not isinstance(org_dict, list):
+                org_dict = [org_dict]
+            self.__deepth = deepth
+            for item in org_dict:
+                tmp_var_name += f"{item}"
+                tar_dict[item] = model.new_bool_var(name=tmp_var_name)
+                self.__var_cnt += 1
+            return
+        # 构建字典树
+        for key in org_dict.keys():
+            tar_dict[key] = {}
+            self.__dfs_create_dict_bool_var(
+                org_dict = org_dict[key], 
+                tar_dict = tar_dict[key], 
+                tmp_var_name = tmp_var_name + f"{key}_", 
+                deepth = deepth + 1, 
+                model = model
+            )
+        return
+
+
+    def __init__(self, var_name_collection: Union[Dict, List], model: Solver, name: str = "") -> None:
+        '''
+        description: 
+        param [*] self
+        param [Union] var_name_collection
+        param [*] List
+        param [Solver] model
+        param [str] name
+        return [*]
+        '''
+        self.__var_collection = {}
+        self.__deepth = 0
+        self.__var_cnt = 0
+        self.__name = name
+        self.__dfs_create_dict_bool_var(
+            org_dict = var_name_collection,
+            tar_dict = self.__var_collection, 
+            tmp_var_name = "",
+            deepth = 1, 
+            model=model
+        )
+        self.__selected_var_list = []
+        return
+
+    def __dfs_select_var(self, tmp_dict: Dict, selected_var_list: List, cur_k: int):
+        '''
+        description: 
+        param [*] self
+        param [Dict] tmp_dict 
+        param [List] selected_var_list 
+        param [int] cur_k 
+        return [*]
+        '''
+        # 找到叶子节点(bool类型的变量)
+        if not isinstance(tmp_dict, dict):
+            self.__selected_var_list.append(tmp_dict)
+            return
+        # 遍历每个节点
+        if selected_var_list[cur_k] == "*":
+            selected_var_list[cur_k] = tmp_dict.keys()
+        for key in selected_var_list[cur_k]:
+            if not key in tmp_dict.keys():
+                continue
+            self.__dfs_select_var(tmp_dict[key], selected_var_list, cur_k + 1)
+        return
+
+    def select(self, *args):
+        '''
+        description: 
+        param [*] self
+        param [array] args
+        return [*]
+        '''
+        if len(args) < self.__deepth:
+            raise ValueError()
+        self.__selected_var_list = []
+        self.__dfs_select_var(self.__var_collection, args, 0)
+        return self.__selected_var_list
+
+    def __getitem__(self, key):
+        '''
+        description: get var[args[0]][args[1]]...[args[-1]]
+        param [*] self
+        param [array] args
+        return [*]
+        '''
+        return self.__var_collection[key]
+
+    @property
+    def name(self) -> str:
+        return self.__name
