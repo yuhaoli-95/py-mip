@@ -193,7 +193,7 @@ class Constant(AbstractVariavle):
 class Variable(AbstractVariavle):
     def __str__(self) -> str:
         c_type = "Integer" if self._integer else "Continuous"
-        return f'< PWPS.{c_type}Var "{self._name}" (lb = {self._lb}, ub = {self._ub}, type = {self._solver_name}) >'
+        return f'< PYMIP.{c_type}Var "{self._name}" (lb = {self._lb}, ub = {self._ub}, type = {self._solver_name}) >'
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -217,7 +217,7 @@ class Variable(AbstractVariavle):
 '''
 class IntVar(AbstractVariavle):
     def __str__(self):
-        return f'< PWPS.IntegerVar "{self._name}" (lb = {self._lb}, ub = {self._ub}, type = {self._solver_name}) >'
+        return f'< PYMIP.IntegerVar "{self._name}" (lb = {self._lb}, ub = {self._ub}, type = {self._solver_name}) >'
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -242,7 +242,7 @@ class IntVar(AbstractVariavle):
 '''
 class BoolVar(AbstractVariavle):
     def __str__(self):
-        return f'< PWPS.BoolVar "{self._name}" (type = {self._solver_name}) >'
+        return f'< PYMIP.BoolVar "{self._name}" (type = {self._solver_name}) >'
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -280,14 +280,6 @@ class Expression(AbstractVariavle):
     def __str__(self) -> str:
         return self.__info
 
-    def __get_var(self, item) -> list:
-        _left = f"{self._name}"
-        _right = f"{item._name}"
-        if self._operation == "*":
-            _left = _left if _is_var(self._left) else f"({_left})"
-            _right = _right if _is_var(self._left) else f"({_right})"
-        self._name = f"{item._name}" if self._name == "" else f"{_left} {self._operation} {_right}"
-        return item._var
         
     def __init__(self, left, right, solver_name: str, name: str = "", operation: str = "+") -> None:
         super().__init__(solver_name, lb = None, ub = None, integer = None, name = "")
@@ -296,12 +288,24 @@ class Expression(AbstractVariavle):
         self._operation = operation
         self._name = ""
 
-        _left = self.__get_var(left)
-        _right = self.__get_var(right)
+        _left = left._var
+        _right = right._var
+
+        # get formula expression
+        if self._operation == "+":
+            self._name = f"{left._name} {self._operation} {right._name}"
+        elif self._operation == "*" and (_is_real_number(_left) or _is_real_number(_right)):
+            self._name = f"{left._name} {self._operation} {right._name}"
+        elif self._operation in ["==", ">=", "<="]:
+            self._name = f"{left._name} {self._operation} {right._name}"
+        else:
+            # if self._operation == "-" / "*"
+            self._name = f"({left._name}) {self._operation} ({right._name})"
+
 
         self._var = eval(f"(_left) {self._operation} (_right)")
 
-        self.__info = f'< PWPS "Expression", {self._name}, type: {self._solver_name} >'
+        self.__info = f'< PYMIP "Expression", {self._name}, type: {self._solver_name} >'
         return
 
 
