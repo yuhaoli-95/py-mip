@@ -199,27 +199,11 @@ class Variable(AbstractVariavle):
         return self.__str__()
 
     def __init__(self, model, solver_name: str, lb: int, ub: int, integer: bool, name: str = "") -> None:
-        '''
-        description: 
-        param [*] model: model
-        param [str] solver_name: solver type name
-        param [int] lb: lower boundary of variable
-        param [int] ub: upper boundary of varibale
-        param [bool] integer: whether variable is an integer
-        param [str] name: the name of variable
-        return [*]
-        '''
         super().__init__(solver_name, lb, ub, integer, name)
         if solver_name == LP_SOLVER:
             var = model.Var(lb=lb, ub=ub, integer=integer, name=name)
         elif solver_name == CP_SAT_SOLVER:
-            if integer:
-                if lb == 0 and ub == 1:
-                    var = model.NewBoolVar(name=name)
-                else:
-                    var = model.NewIntVar(lb=lb, ub=ub, name=name)
-            else:
-                raise TypeError(detail=f"CP SAT 模型不允许创建小数变量,请检查'{name}'变量类型！")
+            raise TypeError(detail=f"CP SAT 模型不允许创建小数变量,请检查'{name}'变量类型！")
         elif solver_name == SCIP_SOLVER:
             vtype = "I" if integer else "C"
             var = model.addVar(name = name, vtype = vtype, lb = lb, ub = ub)
@@ -669,25 +653,27 @@ class DictBoolVar:
         return f"{self.__name} var collection: {self.__var_cnt}"
 
 
-    def __dfs_create_dict_bool_var(self, org_dict: Dict, tar_dict: Dict, tmp_var_name: str, deepth: int, model: Solver):
+    def __dfs_create_dict_bool_var(self, org_dict: Dict, tar_dict: Dict, tmp_var_name: str, depth: int, model: Solver):
         # 找到原始字典结构中的叶子节点
         if not isinstance(org_dict, dict):
             if not isinstance(org_dict, list):
                 org_dict = [org_dict]
-            self.__deepth = deepth
+            self.__depth = depth
             for item in org_dict:
-                tmp_var_name += f"{item}"
-                tar_dict[item] = model.new_bool_var(name=tmp_var_name)
+                tar_dict[item] = model.new_bool_var(name=tmp_var_name + f"{item}")
                 self.__var_cnt += 1
             return
         # 构建字典树
         for key in org_dict.keys():
             tar_dict[key] = {}
+            if depth not in self.__depth_to_unique_value_list.keys():
+                self.__depth_to_unique_value_list[depth] = set([])
+            self.__depth_to_unique_value_list[depth].add(key)
             self.__dfs_create_dict_bool_var(
                 org_dict = org_dict[key], 
                 tar_dict = tar_dict[key], 
                 tmp_var_name = tmp_var_name + f"{key}_", 
-                deepth = deepth + 1, 
+                depth = depth + 1, 
                 model = model
             )
         return
@@ -704,14 +690,16 @@ class DictBoolVar:
         return [*]
         '''
         self.__var_collection = {}
-        self.__deepth = 0
+        self.__depth = 0
         self.__var_cnt = 0
         self.__name = name
+        # record all values in each layer
+        self.__depth_to_unique_value_list: Dict[int, set] = {}
         self.__dfs_create_dict_bool_var(
             org_dict = var_name_collection,
             tar_dict = self.__var_collection, 
             tmp_var_name = "",
-            deepth = 1, 
+            depth = 1, 
             model=model
         )
         self.__selected_var_list = []
@@ -731,9 +719,10 @@ class DictBoolVar:
             self.__selected_var_list.append(tmp_dict)
             return
         # 遍历每个节点
+        nex_var_list = selected_var_list[cur_k]
         if selected_var_list[cur_k] == "*":
-            selected_var_list[cur_k] = tmp_dict.keys()
-        for key in selected_var_list[cur_k]:
+            nex_var_list = tmp_dict.keys()
+        for key in nex_var_list:
             if not key in tmp_dict.keys():
                 continue
             self.__dfs_select_var(tmp_dict[key], selected_var_list, cur_k + 1)
@@ -746,9 +735,11 @@ class DictBoolVar:
         param [array] args
         return [*]
         '''
-        if len(args) < self.__deepth:
+        if len(args) < self.__depth:
             raise ValueError()
         self.__selected_var_list = []
+        # check args
+        args = [[item] if not isinstance(item, list) and item != "*" else item for item in args ]
         self.__dfs_select_var(self.__var_collection, args, 0)
         return self.__selected_var_list
 
