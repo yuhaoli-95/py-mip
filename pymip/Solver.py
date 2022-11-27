@@ -309,16 +309,26 @@ class Expression(AbstractVariavle):
             # otherwise "x + y" or "x - y"
             else:
                 self._formula = f"{left.formula} {self._operation} {right.formula}"
-        
+        # if "*" 
         elif self._operation == "*":
-            if _is_real_number(_left) or _is_real_number(_right):
-                self._formula = f"{left.formula} {self._operation} {right.formula}"
+            # "num * "
+            if _is_real_number(left):
+                # "num * x" => "num * x"
+                if _is_var(right) or _is_real_number(right):
+                    self._formula = f"{left.formula} {self._operation} {right.formula}"
+                # "num * expr" => "num * (expr)"
+                elif _is_expression(right):
+                    self._formula = f"{left.formula} {self._operation} ({right.formula})"
+                # otherwise "() * ()"
+                else:
+                    self._formula = f"({left.formula}) {self._operation} ({right.formula})"
+            # otherwise "() * ()"
             else:
                 self._formula = f"({left.formula}) {self._operation} ({right.formula})"
         elif self._operation in ["==", ">=", "<="]:
             self._formula = f"{left.formula} {self._operation} {right.formula}"
         else:
-            # if self._operation == "-" / "*"
+            # if self._operation == "/"
             self._formula = f"({left.formula}) {self._operation} ({right.formula})"
 
 
