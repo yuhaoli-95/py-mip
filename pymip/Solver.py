@@ -32,7 +32,7 @@ from .Config import FEASIBLE, IDLE, INFEASIBLE, NOT_SOLVED, OPTIMAL
 
 __all__ = ["Solver", "IntVar", "BoolVar", "Variable", "Expression"]
 
-_is_real_number = lambda x: isinstance(x, numbers.Real)
+_is_real_number = lambda x: isinstance(x, numbers.Real) or isinstance(x, Constant)
 _is_var = lambda x: isinstance(x, IntVar) or isinstance(x, BoolVar) or isinstance(x, Variable) or isinstance(x, Constant)
 # _is_constant = lambda x: isinstance(x, Constant) or isinstance(x, numbers.Real)
 _is_integer_var = lambda x: isinstance(x, IntVar) or isinstance(x, BoolVar)
@@ -63,6 +63,7 @@ class AbstractVariavle(ABC):
         self._integer = integer
         self._name = name
         self._var = None
+        self._formula = name
     @property
     def var(self):
         return self._var
@@ -75,6 +76,9 @@ class AbstractVariavle(ABC):
     @property
     def name(self):
         return self._name
+    @property
+    def formula(self):
+        return self._formula
     @property
     def solver_name(self):
         return self._solver_name
@@ -286,26 +290,41 @@ class Expression(AbstractVariavle):
         self._left = left
         self._right = right
         self._operation = operation
-        self._name = ""
+        # the name of this formula
+        self._name = name
+        self._formula = ""
 
         _left = left._var
         _right = right._var
 
         # get formula expression
-        if self._operation == "+":
-            self._name = f"{left._name} {self._operation} {right._name}"
-        elif self._operation == "*" and (_is_real_number(_left) or _is_real_number(_right)):
-            self._name = f"{left._name} {self._operation} {right._name}"
+        # if "+" or "-" operation
+        if self._operation in ["+", "-"]:
+            # "0 + x" => "x"; "0 - x" => "-x"
+            if _is_real_number(left) and int(left.formula) == 0:
+                self._formula = f"{right.formula}" if self._operation == "+" else f"-{right.formula}"
+            # "x + 0" => "x"; "x - 0" => "x"
+            elif _is_real_number(right) and int(right.formula) == 0:
+                self._formula = f"{left.formula}"
+            # otherwise "x + y" or "x - y"
+            else:
+                self._formula = f"{left.formula} {self._operation} {right.formula}"
+        
+        elif self._operation == "*":
+            if _is_real_number(_left) or _is_real_number(_right):
+                self._formula = f"{left.formula} {self._operation} {right.formula}"
+            else:
+                self._formula = f"({left.formula}) {self._operation} ({right.formula})"
         elif self._operation in ["==", ">=", "<="]:
-            self._name = f"{left._name} {self._operation} {right._name}"
+            self._formula = f"{left.formula} {self._operation} {right.formula}"
         else:
             # if self._operation == "-" / "*"
-            self._name = f"({left._name}) {self._operation} ({right._name})"
+            self._formula = f"({left.formula}) {self._operation} ({right.formula})"
 
 
         self._var = eval(f"(_left) {self._operation} (_right)")
 
-        self.__info = f'< PYMIP "Expression", {self._name}, type: {self._solver_name} >'
+        self.__info = f'< PYMIP "Expression", {self._formula}, type: {self._solver_name} >'
         return
 
 
