@@ -356,7 +356,7 @@ class Solver:
             cp_model.OPTIMAL: OPTIMAL,
             cp_model.FEASIBLE: FEASIBLE,
             cp_model.INFEASIBLE: INFEASIBLE,
-            # cp_model.NOT_SOLVED: NOT_SOLVED,
+            cp_model.UNKNOWN: NOT_SOLVED,
         },
         SCIP_SOLVER: {
             "optimal": OPTIMAL,
@@ -421,7 +421,7 @@ class Solver:
             SCIP_SOLVER: []
         }
 
-        self.__all_obj_vars: Dict[str, List[Union[IntVar, BoolVar, Variable]]] = {
+        self.__all_obj_vars: Dict[str, Dict[str, Union[IntVar, BoolVar, Variable]]] = {
             LP_SOLVER: {},
             CP_SAT_SOLVER: {},
             SCIP_SOLVER: {}
@@ -471,6 +471,9 @@ class Solver:
     def objective_value(self) -> float:
         return self._objective_value
 
+    @property
+    def all_obj_vars(self) -> Dict[str, Union[IntVar, BoolVar, Variable]]:
+        return self.__all_obj_vars[self._solver_name]
         
     '''
     =============================================================================
@@ -546,7 +549,7 @@ class Solver:
         
         # record objective variable
         self.__all_obj_vars[self._solver_name][var._name] = var
-        if _is_var(coeff): self.__all_obj_vars[self._solver_name][coeff._name] = coeff
+        # if _is_var(coeff): self.__all_obj_vars[self._solver_name][coeff._name] = coeff
         return
 
     # model tools
@@ -628,7 +631,8 @@ class Solver:
         elif self._solver_name == CP_SAT_SOLVER:
             # set time limit
             if self._time_limit:
-                self._cp_sat_solver.parameters.max_time_in_seconds = int(self._time_limit.total_seconds() * 1000)
+                self._cp_sat_solver.parameters.max_time_in_seconds = int(self._time_limit.total_seconds())
+                self._cp_sat_solver.parameters.num_search_workers = 4 
             # solve problem
             _status = self._cp_sat_solver.Solve(self._cp_sat_model)
             # modify solver status
@@ -677,6 +681,8 @@ class Solver:
         elif _status == INFEASIBLE:
             # 如果还是不能给出可行解，则输出冲突的约束
             conflict_constraints = [ass._var.Name() for ass in self._cp_sat_assumptions if ass._var.Index() in self._cp_sat_solver.SufficientAssumptionsForInfeasibility()]
+            # 取消 前缀 _ASSUMPTION_
+            conflict_constraints = [item.replace("_ASSUMPTION_", "") for item in conflict_constraints]
             return conflict_constraints
         else:
             raise ValueError(f"{self._solver_name} solver return UNDEFINED STATUS = {_status}!")
@@ -692,6 +698,11 @@ class DictBoolVar:
             if not isinstance(org_dict, list):
                 org_dict = [org_dict]
             self.__depth = depth
+            # record the leaves layer in the tree
+            if depth not in self.__depth_to_unique_value_list.keys():
+                self.__depth_to_unique_value_list[depth] = set([])
+            self.__depth_to_unique_value_list[depth].update(org_dict)
+            # create decision variable
             for item in org_dict:
                 tar_dict[item] = model.new_bool_var(name=tmp_var_name + f"{item}")
                 self.__var_cnt += 1
@@ -736,6 +747,7 @@ class DictBoolVar:
             model=model
         )
         self.__selected_var_list = []
+        self.__path = []
         return
 
     def __dfs_select_var(self, tmp_dict: Dict, selected_var_list: List, cur_k: int):
@@ -755,10 +767,17 @@ class DictBoolVar:
         nex_var_list = selected_var_list[cur_k]
         if selected_var_list[cur_k] == "*":
             nex_var_list = tmp_dict.keys()
+        # check each item of selected_var_list[cur_k] is in self.__depth_to_unique_value_list[cur_k]
+        missing_item_list = [str(item) for item in nex_var_list if item not in self.__depth_to_unique_value_list[cur_k + 1]]
+        if missing_item_list:
+            path = ''.join([f"['{item}']" for item in self.__path])
+            warnings.warn(f"{missing_item_list} of {self.name}{''.join(path)} is undefined in variable collection.", stacklevel=10)
         for key in nex_var_list:
             if not key in tmp_dict.keys():
                 continue
+            self.__path.append(key)
             self.__dfs_select_var(tmp_dict[key], selected_var_list, cur_k + 1)
+            self.__path.pop(-1)
         return
 
     def select(self, *args):
@@ -770,6 +789,7 @@ class DictBoolVar:
         '''
         if len(args) < self.__depth:
             raise ValueError()
+        self.__path = []
         self.__selected_var_list = []
         # check args
         args = [[item] if not isinstance(item, list) and item != "*" else item for item in args ]
